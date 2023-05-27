@@ -1,13 +1,13 @@
 const express = require('express')
 //const path = require ('path');
 
-//const db = require ('./dataBase');
+const db = require ('./dataBase');
 const routes = require('./routes');
 
 
 const app = express();
 
-//db.connect()
+db.connect()
 
 
 //habilita server para receber dados via post form
