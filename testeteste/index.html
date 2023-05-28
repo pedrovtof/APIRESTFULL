@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .hidden{
+            display:none;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Listagem de produtos</h2>
+
+    <ul id="products-list"></ul>
+
+    <hr>
+
+    <h2>Cadastro de produtos</h2>
+
+    <form id="form">
+        <div>
+            <label>Nome</label>
+            <input type="text" name="name">
+        </div>
+        <div>
+            <label>Marca</label>
+            <input type="text" name="brand">
+        </div>
+        <div>
+            <label>Preço</label>
+            <input type="text" name="price">
+        </div>
+        <div>
+            <button type="submit">Cadastrar</button>
+        </div>
+    </form>
+
+<div id="edit" class="hidden">
+    <hr>
+
+    <h2>Edição de produtos</h2>
+
+    <form id="formEdit">
+        <input type="hidden" name="id">
+        <div>
+            <label>Nome</label>
+            <input type="text" name="name">
+        </div>
+        <div>
+            <label>Marca</label>
+            <input type="text" name="brand">
+        </div>
+        <div>
+            <label>Preço</label>
+            <input type="text" name="price">
+        </div>
+        <div>
+            <button type="submit">Alterar</button>
+        </div>
+    </form>
+<div>
+
+    <script>
+
+        const API_URL = 'http://localhost:8080/api/products'
+        const edit = document.querySelector('#edit')
+        const form = document.querySelector('#form')
+        const formEdit = document.querySelector('#formEdit')
+        const productList = document.querySelector('#products-list')
+        
+
+        //add eventos de click no botao excluir
+        function addEventoBotaoExcluir (){
+            const botaoExcluir = document.querySelectorAll('.botao-excluir')
+
+            botaoExcluir.forEach(botao =>{
+                botao.onclick = function(e){
+                    e.preventDefault()
+
+                    const id = this.dataset.id
+
+                    fetch(`${API_URL}/${id}`, {
+                        method: 'DELETE',
+                    }).then(response =>{
+                        response.json().then(data=>{
+                            if(data.message === 'Sucesso'){
+                                    obterLista()
+                                    alert('Excluido com sucesso!')
+                                }
+                                else{
+                                    alert('OPS! Ocorreu um erro, tente novamente')
+                                }
+                        })  
+                    })
+
+                }
+            })
+
+        }
+
+        //add eventos de click no botao editar
+        function addEventoBotaoEditar(){
+            const botaoEditar = document.querySelectorAll('.botao-editar')
+
+            botaoEditar.forEach(botao =>{
+                botao.onclick = function(e){
+                    e.preventDefault()
+
+                    edit.classList.remove('hidden')
+
+                    const id = this.dataset.id
+                    const name = this.dataset.name
+                    const brand = this.dataset.brand
+                    const price = this.dataset.price
+
+                    document.forms['formEdit'].id.value = id
+                    document.forms['formEdit'].name.value = name
+                    document.forms['formEdit'].brand.value = brand
+                    document.forms['formEdit'].price.value = price
+
+                }
+            })
+        }
+
+        //obtendo lista de produtos
+    function obterLista(){
+        fetch(API_URL)
+            .then(response=>{
+                    response.json().then(data=>{
+                        const productsHtml = data.map(product => `
+                        <li>
+                            ${product.name} - ${product.brand} - ${product.price} - 
+                            <a href="#" 
+                                class="botao-excluir"
+                                data-id="${product._id}">[Excluir]
+                            </a> - 
+                            <a href="#" 
+                                class="botao-editar" 
+                                data-name="${product.name}" 
+                                data-brand="${product.brand}" 
+                                data-price="${product.price}" 
+                                data-id="${product._id}">[Editar]
+                            </a>
+                        </li>
+                        `).join('')
+                        productList.innerHTML = productsHtml
+                        addEventoBotaoExcluir()
+                        addEventoBotaoEditar()
+                        })}
+                    ).catch(err=>console.log(err))
+        }
+
+        obterLista()
+
+        //ao cadastrar produto
+        form.onsubmit= function(e){
+            e.preventDefault()
+            const name = document.forms['form'].name.value
+            const brand = document.forms['form'].brand.value
+            const price = document.forms['form'].price.value
+            fetch(API_URL, {
+                method: 'POST',
+                headers:{
+                    'Content-Type':'application/json'
+                },
+                body: JSON.stringify({
+                    name,
+                    brand,
+                    price, 
+                })
+            }).then(response => {
+                response.json().then(data=>{
+                    if(data.message === 'sucesso'){
+                        form.reset()
+                        obterLista()
+                        alert('Cadastro realizado com sucesso!')
+                    }
+                    else{
+                        alert('OPS! Ocorreu um erro, tente novamente')
+                    }
+                })
+            })
+        }
+            
+        //ao editar
+        formEdit.onsubmit= function(e){
+            e.preventDefault();
+
+ 
+                    const id = document.forms['formEdit'].id.value
+                    const name = document.forms['formEdit'].name.value
+                    const brand = document.forms['formEdit'].brand.value
+                    const price = document.forms['formEdit'].price.value
+
+                    fetch(`${API_URL}/${id}`, {
+                        method: 'PUT',
+                        headers:{
+                            'Content-Type':'application/json'
+                        },
+                        body:JSON.stringify({
+                            name,
+                            brand,
+                            price,
+                        })
+                    }).then(response =>{
+                        response.json().then(data=>{
+                            if(data.message === 'sucesso'){
+                                    formEdit.reset()
+                                    edit.classList.add('hidden')
+                                    obterLista()
+                                    alert('Editado')
+                                }
+                                else{
+                                    alert('OPS! Ocorreu um erro, tente novamente')
+                                }
+                        })  
+                    })
+        }
+
+    </script>
+</body>
+</html>
